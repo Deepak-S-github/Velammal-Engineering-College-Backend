@@ -17,6 +17,17 @@ jobs:
         echo "$EC2_KEY" > private_key.pem
         chmod 600 private_key.pem
 
+    - name:  Debug PEM Contents
+      run: |
+        echo " First few lines of the PEM key:"
+        head -n 5 private_key.pem || echo " Failed to read PEM"
+        echo ""
+        echo " File type of PEM:"
+        file private_key.pem || echo " file command failed"
+        echo ""
+        echo " OpenSSL Key Check:"
+        openssl rsa -in private_key.pem -check -noout || echo " PEM key is invalid or encrypted"
+    
     - name: 📤 Copy setup.sh to EC2
       run: |
         scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
