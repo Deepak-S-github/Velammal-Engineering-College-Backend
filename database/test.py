@@ -10,6 +10,7 @@ db_name = "VEC"
 
 client = MongoClient(mongo_uri)
 db = client[db_name]
+
 def insert_hod_datas():
     collection = db['HODS']
     with open("/root/Velammal-Engineering-College-Backend/docs/hods.json", "r",encoding="utf-8") as file:
