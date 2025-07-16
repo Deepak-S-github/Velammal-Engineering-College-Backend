@@ -14,8 +14,10 @@ jobs:
 
     - name: 🔐 Setup SSH Key
       run: |
-        echo "$EC2_KEY" > private_key.pem
-        chmod 600 private_key.pem
+        - name: 🔐 Setup SSH Key
+  run: |
+    echo "${{ secrets.EC2_KEY }}" > private_key.pem
+    chmod 600 private_key.pem
 
     - name:  Debug PEM Contents
       run: |
