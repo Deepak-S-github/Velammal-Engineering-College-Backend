@@ -32,12 +32,13 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
 
-      - name: 🚀 SSH into EC2 and run setup.sh
+      - name: 🚀 SSH into EC2 and run setup.sh as root
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
+            echo "➡️ Moving script to /root and executing as root"
+            sudo mv /home/ec2-user/setup.sh /root/setup.sh
+            sudo chmod +x /root/setup.sh
             sudo dnf install -y dos2unix
-            dos2unix setup.sh
-            chmod +x setup.sh
-            ./setup.sh | tee ~/setup_exec.log
-            rm -f setup.sh
+            sudo dos2unix /root/setup.sh
+            sudo bash /root/setup.sh | tee /root/setup_exec.log
           EOF
