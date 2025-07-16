@@ -40,5 +40,4 @@ jobs:
             sudo chmod +x /root/setup.sh
             sudo dnf install -y dos2unix
             sudo dos2unix /root/setup.sh
-            sudo bash /root/setup.sh | tee /root/setup_exec.log
           EOF
