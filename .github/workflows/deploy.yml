@@ -40,4 +40,8 @@ jobs:
             sudo chmod +x /root/setup.sh
             sudo dnf install -y dos2unix
             sudo dos2unix /root/setup.sh
+            sudo mv /home/ec2-user/setup.sh /root/setup.sh
+            sudo chmod +x /root/setup.sh
+            sudo dnf install -y dos2unix
+            sudo dos2unix /root/setup.sh
           EOF
