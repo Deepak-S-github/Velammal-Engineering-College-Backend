@@ -8,7 +8,7 @@ import shutil
 import bcrypt
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-     
+       
 #Hostel Student Test Settings is Turned On Till Now at line 1126
 mongo_uri = "mongodb://localhost:27017/"
 db_name = "VEC"
