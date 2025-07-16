@@ -43,3 +43,4 @@ jobs:
             echo "➡️ Running script..."
             sudo bash -x /root/setup.sh
           EOF
+ 
