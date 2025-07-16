@@ -9,37 +9,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🧾 Checkout Code
-      uses: actions/checkout@v3
+      - name: 🧾 Checkout Code
+        uses: actions/checkout@v3
 
-    - name: 🔐 Setup SSH Key
-      run: |
-        - name: 🔐 Setup SSH Key
-  run: |
-    echo "${{ secrets.EC2_KEY }}" > private_key.pem
-    chmod 600 private_key.pem
+      - name: 🔐 Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
 
-    - name:  Debug PEM Contents
-      run: |
-        echo " First few lines of the PEM key:"
-        head -n 5 private_key.pem || echo " Failed to read PEM"
-        echo ""
-        echo " File type of PEM:"
-        file private_key.pem || echo " file command failed"
-        echo ""
-        echo " OpenSSL Key Check:"
-        openssl rsa -in private_key.pem -check -noout || echo " PEM key is invalid or encrypted"
-    
-    - name: 📤 Copy setup.sh to EC2
-      run: |
-        scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
+      - name: 🧪 Debug PEM Contents
+        run: |
+          echo "First few lines of the PEM key:"
+          head -n 5 private_key.pem || echo "Failed to read PEM"
+          echo ""
+          echo "File type of PEM:"
+          file private_key.pem || echo "file command failed"
+          echo ""
+          echo "OpenSSL Key Check:"
+          openssl rsa -in private_key.pem -check -noout || echo "PEM key is invalid or encrypted"
 
-    - name: 🚀 SSH into EC2 and run setup.sh (Amazon Linux 2023)
-      run: |
-        ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} "
-          sudo dnf install -y dos2unix
-          dos2unix setup.sh
-          chmod +x setup.sh
-          ./setup.sh | tee ~/setup_exec.log
-          rm -f setup.sh
-        "
+      - name: 📤 Copy setup.sh to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
+
+      - name: 🚀 SSH into EC2 and run setup.sh
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
+            sudo dnf install -y dos2unix
+            dos2unix setup.sh
+            chmod +x setup.sh
+            ./setup.sh | tee ~/setup_exec.log
+            rm -f setup.sh
+          EOF
