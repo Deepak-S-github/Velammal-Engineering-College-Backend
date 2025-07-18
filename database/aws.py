@@ -8,7 +8,7 @@ import shutil
 import bcrypt
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+     
 mongo_uri = "mongodb://localhost:27017/"
 db_name = "VEC"
 collection_name = "staff_details"
