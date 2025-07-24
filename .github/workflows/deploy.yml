@@ -40,33 +40,21 @@ AWS_REGION=${{ secrets.AWS_REGION }}
 REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}
 EOF
 
-            - name: 🚀 SSH into EC2 and Run Deployment Script as root
+      - name: 📤 Upload .env and setup.sh to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'REMOTE_EOF'
-          set -e
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env setup.sh ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/
 
-          echo "➡️ Switching to root..."
-          sudo su -c 'bash -s' <<'INNER_EOF'
-            echo "➡️ Moving .env to /root/.env..."
-            mv /home/ec2-user/.env /root/.env
+      - name: 🚀 SSH into EC2 and Run Deployment Script as root
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} '
+            sudo mv /home/ec2-user/.env /root/.env
+            sudo mv /home/ec2-user/setup.sh /root/setup.sh
+            sudo chmod +x /root/setup.sh
 
-            echo "➡️ Moving setup.sh to /root/setup.sh..."
-            mv /home/ec2-user/setup.sh /root/setup.sh
-
-            echo "➡️ Making setup.sh executable..."
-            chmod +x /root/setup.sh
-
-            echo "📦 Installing dos2unix if missing..."
             if ! command -v dos2unix &> /dev/null; then
-              yum install -y dos2unix || dnf install -y dos2unix
+              sudo yum install -y dos2unix || sudo dnf install -y dos2unix
             fi
 
-            echo "🔧 Converting line endings..."
-            dos2unix /root/setup.sh /root/.env
-
-            echo "🚀 Running setup script..."
-            bash /root/setup.sh
-          INNER_EOF
-          REMOTE_EOF
-
-EOF
+            sudo dos2unix /root/.env /root/setup.sh
+            sudo bash /root/setup.sh
+          '
