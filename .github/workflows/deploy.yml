@@ -17,7 +17,7 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > private_key.pem
           chmod 600 private_key.pem
 
-            - name: 🔐 Generate .env File from GitHub Secrets
+      - name: 🔐 Generate .env File from GitHub Secrets
         run: |
           echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
@@ -38,7 +38,6 @@ jobs:
           echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
           echo "REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}" >> .env
 
-
       - name: 🚀 SSH into EC2 and Run Deployment Script as root
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'REMOTE_EOF'
@@ -47,10 +46,10 @@ jobs:
           echo "➡️ Switching to root..."
           sudo su -c 'bash -s' <<'INNER_EOF'
             echo "➡️ Moving .env to /root/.env..."
-            mv /home/ec2-user/.env /root/.env || mv ~/.env /root/.env
+            mv /home/ec2-user/.env /root/.env
 
             echo "➡️ Moving setup.sh to /root/setup.sh..."
-            mv /home/ec2-user/setup.sh /root/setup.sh || mv ~/setup.sh /root/setup.sh
+            mv /home/ec2-user/setup.sh /root/setup.sh
 
             echo "➡️ Making setup.sh executable..."
             chmod +x /root/setup.sh
