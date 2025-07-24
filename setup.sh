@@ -26,7 +26,7 @@ BACKEND_TARGET="/var/www/Backend"
 # Step 1: Cleanup old clone if exists
 echo -e "\n\033[1;32m========== Cleaning old repo ==========\033[0m"
 rm -rf "$CLONE_DIR"
-
+  
 # Step 2: Clone latest code
 echo -e "\n\033[1;32m========== Cloning Frontend Repo ==========\033[0m"
 git clone "$REPO_URL" "$CLONE_DIR"
