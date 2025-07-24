@@ -19,48 +19,53 @@ jobs:
 
       - name: 📦 Create Remote .env file from GitHub Secrets
         run: |
-          echo "Generating .env file..."
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
-          echo "BASE_EMAIL=${{ secrets.BASE_EMAIL }}" >> .env
-          echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
-          echo "TARGET_EMAIL=${{ secrets.TARGET_EMAIL }}" >> .env
-          echo "ICELL_TARGET_EMAIL=${{ secrets.ICELL_TARGET_EMAIL }}" >> .env
-          echo "GROQ_API_KEY_1=${{ secrets.GROQ_API_KEY_1 }}" >> .env
-          echo "GROQ_API_KEY_2=${{ secrets.GROQ_API_KEY_2 }}" >> .env
-          echo "GROQ_API_KEY_3=${{ secrets.GROQ_API_KEY_3 }}" >> .env
-          echo "GROQ_API_KEY_4=${{ secrets.GROQ_API_KEY_4 }}" >> .env
-          echo "GROQ_API_KEY_5=${{ secrets.GROQ_API_KEY_5 }}" >> .env
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
-          echo "AWS_S3_NAME=${{ secrets.AWS_S3_NAME }}" >> .env
-          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
-          echo "REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}" >> .env
+          echo "Generating .env file from GitHub secrets..."
+          cat <<EOF > .env
+MONGO_URI=${{ secrets.MONGO_URI }}
+DB_NAME=${{ secrets.DB_NAME }}
+CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}
+PORT=${{ secrets.PORT }}
+BASE_EMAIL=${{ secrets.BASE_EMAIL }}
+PASSWORD=${{ secrets.PASSWORD }}
+TARGET_EMAIL=${{ secrets.TARGET_EMAIL }}
+ICELL_TARGET_EMAIL=${{ secrets.ICELL_TARGET_EMAIL }}
+GROQ_API_KEY_1=${{ secrets.GROQ_API_KEY_1 }}
+GROQ_API_KEY_2=${{ secrets.GROQ_API_KEY_2 }}
+GROQ_API_KEY_3=${{ secrets.GROQ_API_KEY_3 }}
+GROQ_API_KEY_4=${{ secrets.GROQ_API_KEY_4 }}
+GROQ_API_KEY_5=${{ secrets.GROQ_API_KEY_5 }}
+AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+AWS_S3_NAME=${{ secrets.AWS_S3_NAME }}
+AWS_REGION=${{ secrets.AWS_REGION }}
+REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}
+EOF
 
       - name: 📤 Upload setup.sh and .env to EC2
         run: |
+          echo "Transferring files to EC2..."
           scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
           scp -o StrictHostKeyChecking=no -i private_key.pem .env ${{ secrets.EC2_HOST }}:/home/ec2-user/env.upload
 
       - name: 🚀 SSH into EC2 and run setup.sh as root
         run: |
+          echo "Starting remote deployment..."
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
-            echo "➡️ Moving files to /root"
+            set -e
+
+            echo "➡️ Moving setup files to /root..."
             sudo mv /home/ec2-user/setup.sh /root/setup.sh
             sudo mv /home/ec2-user/env.upload /root/.env
             sudo chmod +x /root/setup.sh
 
-            # Amazon Linux compatibility: install dos2unix only if not exists
+            echo "📦 Installing dos2unix if missing..."
             if ! command -v dos2unix &> /dev/null; then
-              echo "📦 Installing dos2unix..."
-              sudo yum install -y dos2unix
+              sudo yum install -y dos2unix || sudo dnf install -y dos2unix
             fi
 
-            echo "📦 Converting line endings (if needed)..."
+            echo "🔧 Normalizing line endings..."
             sudo dos2unix /root/setup.sh /root/.env
 
-            echo "🚀 Running deployment script..."
+            echo "🚀 Executing setup script..."
             sudo bash /root/setup.sh
-          EOF
+EOF
