@@ -17,29 +17,50 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > private_key.pem
           chmod 600 private_key.pem
 
-      - name: 🧪 Debug PEM Contents
+      - name: 📦 Create Remote .env file from GitHub Secrets
         run: |
-          echo "First few lines of the PEM key:"
-          head -n 5 private_key.pem || echo "Failed to read PEM"
-          echo ""
-          echo "File type of PEM:"
-          file private_key.pem || echo "file command failed"
-          echo ""
-          echo "OpenSSL Key Check:"
-          openssl rsa -in private_key.pem -check -noout || echo "PEM key is invalid or encrypted"
+          echo "Generating .env file..."
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "BASE_EMAIL=${{ secrets.BASE_EMAIL }}" >> .env
+          echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
+          echo "TARGET_EMAIL=${{ secrets.TARGET_EMAIL }}" >> .env
+          echo "ICELL_TARGET_EMAIL=${{ secrets.ICELL_TARGET_EMAIL }}" >> .env
+          echo "GROQ_API_KEY_1=${{ secrets.GROQ_API_KEY_1 }}" >> .env
+          echo "GROQ_API_KEY_2=${{ secrets.GROQ_API_KEY_2 }}" >> .env
+          echo "GROQ_API_KEY_3=${{ secrets.GROQ_API_KEY_3 }}" >> .env
+          echo "GROQ_API_KEY_4=${{ secrets.GROQ_API_KEY_4 }}" >> .env
+          echo "GROQ_API_KEY_5=${{ secrets.GROQ_API_KEY_5 }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+          echo "AWS_S3_NAME=${{ secrets.AWS_S3_NAME }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}" >> .env
 
-      - name: 📤 Copy setup.sh to EC2
+      - name: 📤 Upload setup.sh and .env to EC2
         run: |
           scp -o StrictHostKeyChecking=no -i private_key.pem setup.sh ${{ secrets.EC2_HOST }}:/home/ec2-user/setup.sh
+          scp -o StrictHostKeyChecking=no -i private_key.pem .env ${{ secrets.EC2_HOST }}:/home/ec2-user/env.upload
 
       - name: 🚀 SSH into EC2 and run setup.sh as root
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
-            echo "➡️ Moving script to /root and executing as root"
+            echo "➡️ Moving files to /root"
             sudo mv /home/ec2-user/setup.sh /root/setup.sh
+            sudo mv /home/ec2-user/env.upload /root/.env
             sudo chmod +x /root/setup.sh
-            sudo dnf install -y dos2unix
-            sudo dos2unix /root/setup.sh
-            echo "➡️ Running script..."
-            sudo bash -x /root/setup.sh
+
+            # Amazon Linux compatibility: install dos2unix only if not exists
+            if ! command -v dos2unix &> /dev/null; then
+              echo "📦 Installing dos2unix..."
+              sudo yum install -y dos2unix
+            fi
+
+            echo "📦 Converting line endings (if needed)..."
+            sudo dos2unix /root/setup.sh /root/.env
+
+            echo "🚀 Running deployment script..."
+            sudo bash /root/setup.sh
           EOF
