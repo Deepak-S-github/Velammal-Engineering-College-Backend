@@ -38,7 +38,7 @@ jobs:
           echo "AWS_REGION=\"${{ secrets.AWS_REGION }}\"" >> .env
           echo "REACT_APP_BASE_URL=\"${{ secrets.REACT_APP_BASE_URL }}\"" >> .env
 
-
+ 
       - name: 🚀 SSH into EC2 and Run Deployment Script as root
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'REMOTE_EOF'
