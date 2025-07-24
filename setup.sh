@@ -15,6 +15,7 @@ else
   exit 1
 fi
 # Variables
+
 REPO_URL="https://github.com/SAMSDP/VEC_Landing.git"
 CLONE_DIR=~/VEC_Landing
 FRONTEND_DIR="$CLONE_DIR/Frontend"
