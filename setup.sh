@@ -5,7 +5,7 @@ set -e
 echo -e "\n\033[1;34m🚀 Starting Safe Deployment...\033[0m"
 
 # ✅ Load environment variables from ~/.env
-ENV_PATH="$HOME/.env"
+ENV_PATH="/root/.env"
 
 if [ -f "$ENV_PATH" ]; then
   echo -e "\n\033[1;36m📦 Loading environment variables from $ENV_PATH...\033[0m"
