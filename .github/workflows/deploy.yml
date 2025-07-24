@@ -19,8 +19,7 @@ jobs:
 
       - name: 🔐 Generate .env File from GitHub Secrets
         run: |
-          echo "Generating .env file from GitHub secrets..." > .env
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}" >> .env
           echo "PORT=${{ secrets.PORT }}" >> .env
@@ -47,7 +46,7 @@ jobs:
 
       - name: 🚀 SSH into EC2 and Run Deployment Script
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             echo "➡️ Making setup.sh executable..."
             chmod +x ~/setup.sh
