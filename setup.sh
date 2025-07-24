@@ -14,7 +14,7 @@ else
   echo -e "\n\033[0;31m❌ /root/.env file not found. Deployment aborted.\033[0m"
   exit 1
 fi
-
+  
 # Variables
 REPO_URL="https://github.com/SAMSDP/VEC_Landing.git"
 CLONE_DIR=~/VEC_Landing
