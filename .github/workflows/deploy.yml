@@ -47,23 +47,21 @@ jobs:
 
       - name: 🚀 SSH into EC2 and run setup.sh as root
         run: |
-          echo "Starting remote deployment..."
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} "
             set -e
-
-            echo "➡️ Moving setup files to /root..."
+            echo '➡️ Moving files to /root...'
             sudo mv /home/ec2-user/setup.sh /root/setup.sh
             sudo mv /home/ec2-user/env.upload /root/.env
             sudo chmod +x /root/setup.sh
 
-            echo "📦 Installing dos2unix if missing..."
+            echo '📦 Installing dos2unix if missing...'
             if ! command -v dos2unix &> /dev/null; then
               sudo yum install -y dos2unix || sudo dnf install -y dos2unix
             fi
 
-            echo "🔧 Normalizing line endings..."
+            echo '🔧 Fixing line endings...'
             sudo dos2unix /root/setup.sh /root/.env
 
-            echo "🚀 Executing setup script..."
+            echo '🚀 Executing setup script...'
             sudo bash /root/setup.sh
-EOF
+          "
