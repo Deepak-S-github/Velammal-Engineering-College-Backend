@@ -19,27 +19,25 @@ jobs:
 
       - name: 🔐 Generate .env File from GitHub Secrets
         run: |
-          echo "Generating .env file from GitHub secrets..."
-          cat <<EOF > .env
-MONGO_URI=${{ secrets.MONGO_URI }}
-DB_NAME=${{ secrets.DB_NAME }}
-CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}
-PORT=${{ secrets.PORT }}
-BASE_EMAIL=${{ secrets.BASE_EMAIL }}
-PASSWORD=${{ secrets.PASSWORD }}
-TARGET_EMAIL=${{ secrets.TARGET_EMAIL }}
-ICELL_TARGET_EMAIL=${{ secrets.ICELL_TARGET_EMAIL }}
-GROQ_API_KEY_1=${{ secrets.GROQ_API_KEY_1 }}
-GROQ_API_KEY_2=${{ secrets.GROQ_API_KEY_2 }}
-GROQ_API_KEY_3=${{ secrets.GROQ_API_KEY_3 }}
-GROQ_API_KEY_4=${{ secrets.GROQ_API_KEY_4 }}
-GROQ_API_KEY_5=${{ secrets.GROQ_API_KEY_5 }}
-AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-AWS_S3_NAME=${{ secrets.AWS_S3_NAME }}
-AWS_REGION=${{ secrets.AWS_REGION }}
-REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}
-EOF
+          echo "Generating .env file from GitHub secrets..." > .env
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "CHAT_DB_NAME=${{ secrets.CHAT_DB_NAME }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "BASE_EMAIL=${{ secrets.BASE_EMAIL }}" >> .env
+          echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
+          echo "TARGET_EMAIL=${{ secrets.TARGET_EMAIL }}" >> .env
+          echo "ICELL_TARGET_EMAIL=${{ secrets.ICELL_TARGET_EMAIL }}" >> .env
+          echo "GROQ_API_KEY_1=${{ secrets.GROQ_API_KEY_1 }}" >> .env
+          echo "GROQ_API_KEY_2=${{ secrets.GROQ_API_KEY_2 }}" >> .env
+          echo "GROQ_API_KEY_3=${{ secrets.GROQ_API_KEY_3 }}" >> .env
+          echo "GROQ_API_KEY_4=${{ secrets.GROQ_API_KEY_4 }}" >> .env
+          echo "GROQ_API_KEY_5=${{ secrets.GROQ_API_KEY_5 }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+          echo "AWS_S3_NAME=${{ secrets.AWS_S3_NAME }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}" >> .env
 
       - name: 📤 Upload setup.sh and .env to EC2
         run: |
@@ -49,7 +47,7 @@ EOF
 
       - name: 🚀 SSH into EC2 and Run Deployment Script
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << EOF
             set -e
             echo "➡️ Making setup.sh executable..."
             chmod +x ~/setup.sh
@@ -64,4 +62,4 @@ EOF
 
             echo "🚀 Running setup script..."
             bash ~/setup.sh
-EOF
+          EOF
