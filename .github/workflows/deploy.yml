@@ -60,9 +60,6 @@ jobs:
               yum install -y dos2unix || dnf install -y dos2unix
             fi
 
-            echo "🔧 Converting line endings..."
-            dos2unix /root/setup.sh /root/.env
-
             echo "🚀 Running setup script..."
             bash /root/setup.sh
           INNER_EOF
