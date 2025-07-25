@@ -17,7 +17,7 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > private_key.pem
           chmod 600 private_key.pem
 
-      - name: 🚀 SSH into EC2 and Run Deployment (No .env upload)
+      - name: 🚀 SSH into EC2 and Run Deployment (No .env)
         env:
           REPO_URL: "https://github.com/SAMSDP/VEC_Landing.git"
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -40,73 +40,75 @@ jobs:
           REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<'EOF'
-            set -xe
+          set -xe
 
-            echo "🚀 Starting Safe Deployment..."
+          echo "🚀 Starting Safe Deployment..."
 
-            CLONE_DIR="$HOME/VEC_Landing"
-            FRONTEND_DIR="$CLONE_DIR/Frontend"
-            BACKEND_DIR="$CLONE_DIR/Backend"
-            FRONTEND_TARGET="/var/www/html/Frontend"
-            BACKEND_TARGET="/var/www/Backend"
+          CLONE_DIR="$HOME/VEC_Landing"
+          FRONTEND_DIR="$CLONE_DIR/Frontend"
+          BACKEND_DIR="$CLONE_DIR/Backend"
+          FRONTEND_TARGET="/var/www/html/Frontend"
+          BACKEND_TARGET="/var/www/Backend"
 
-            echo "🧹 Cleaning old repo if exists..."
-            rm -rf "$CLONE_DIR"
+          echo "🧹 Cleaning old repo if exists..."
+          rm -rf "$CLONE_DIR"
 
-            echo "📥 Cloning latest repo..."
-            git clone "$REPO_URL" "$CLONE_DIR"
+          echo "📥 Cloning latest repo..."
+          git clone "${REPO_URL}" "$CLONE_DIR"
 
-            echo "📦 Installing Frontend Dependencies..."
-            cd "$FRONTEND_DIR"
-            npm install --legacy-peer-deps
+          echo "📦 Installing Frontend Dependencies..."
+          cd "$FRONTEND_DIR"
+          npm install --legacy-peer-deps
 
-            echo "📄 Writing frontend .env inline..."
-            echo "REACT_APP_BASE_URL=$REACT_APP_BASE_URL" > .env
+          echo "📄 Writing frontend .env inline..."
+          echo "REACT_APP_BASE_URL=${REACT_APP_BASE_URL}" > .env
 
-            echo "🏗️  Building React App..."
-            npm run build
+          echo "🏗️  Building React App..."
+          npm run build
 
-            echo "🛑 Stopping PM2 Backend if running..."
-            pm2 stop server.js || true
+          echo "🛑 Stopping PM2 Backend if running..."
+          pm2 stop server.js || true
 
-            echo "📦 Installing Backend Dependencies..."
-            cd "$BACKEND_DIR"
-            npm install --legacy-peer-deps
+          echo "📦 Installing Backend Dependencies..."
+          cd "$BACKEND_DIR"
+          npm install --legacy-peer-deps
 
-            echo "📄 Writing backend .env inline..."
-            echo "MONGO_URI=$MONGO_URI" > .env
-            echo "DB_NAME=$DB_NAME" >> .env
-            echo "CHAT_DB_NAME=$CHAT_DB_NAME" >> .env
-            echo "PORT=$PORT" >> .env
-            echo "BASE_EMAIL=$BASE_EMAIL" >> .env
-            echo "PASSWORD=$PASSWORD" >> .env
-            echo "TARGET_EMAIL=$TARGET_EMAIL" >> .env
-            echo "ICELL_TARGET_EMAIL=$ICELL_TARGET_EMAIL" >> .env
-            echo "GROQ_API_KEY_1=$GROQ_API_KEY_1" >> .env
-            echo "GROQ_API_KEY_2=$GROQ_API_KEY_2" >> .env
-            echo "GROQ_API_KEY_3=$GROQ_API_KEY_3" >> .env
-            echo "GROQ_API_KEY_4=$GROQ_API_KEY_4" >> .env
-            echo "GROQ_API_KEY_5=$GROQ_API_KEY_5" >> .env
-            echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env
-            echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env
-            echo "AWS_S3_NAME=$AWS_S3_NAME" >> .env
-            echo "AWS_REGION=$AWS_REGION" >> .env
+          echo -e "\n📄 Writing backend .env..."
+          cat <<ENVB > .env
+MONGO_URI=${MONGO_URI}
+DB_NAME=${DB_NAME}
+CHAT_DB_NAME=${CHAT_DB_NAME}
+PORT=${PORT}
+BASE_EMAIL=${BASE_EMAIL}
+PASSWORD=${PASSWORD}
+TARGET_EMAIL=${TARGET_EMAIL}
+ICELL_TARGET_EMAIL=${ICELL_TARGET_EMAIL}
+GROQ_API_KEY_1=${GROQ_API_KEY_1}
+GROQ_API_KEY_2=${GROQ_API_KEY_2}
+GROQ_API_KEY_3=${GROQ_API_KEY_3}
+GROQ_API_KEY_4=${GROQ_API_KEY_4}
+GROQ_API_KEY_5=${GROQ_API_KEY_5}
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+AWS_S3_NAME=${AWS_S3_NAME}
+AWS_REGION=${AWS_REGION}
+ENVB
 
-            echo "🔁 Replacing Frontend..."
-            sudo rm -rf "$FRONTEND_TARGET"
-            sudo mv "$FRONTEND_DIR" "$FRONTEND_TARGET"
+          echo "🔁 Replacing Frontend..."
+          sudo rm -rf "$FRONTEND_TARGET"
+          sudo mv "$FRONTEND_DIR" "$FRONTEND_TARGET"
 
-            echo "🔁 Replacing Backend..."
-            sudo rm -rf "$BACKEND_TARGET"
-            sudo mv "$BACKEND_DIR" "$BACKEND_TARGET"
+          echo "🔁 Replacing Backend..."
+          sudo rm -rf "$BACKEND_TARGET"
+          sudo mv "$BACKEND_DIR" "$BACKEND_TARGET"
 
-            echo "🚀 Restarting PM2 Backend..."
-            cd "$BACKEND_TARGET"
-            pm2 start server.js || pm2 restart server.js
-            pm2 save
+          echo "🚀 Restarting PM2 Backend..."
+          cd "$BACKEND_TARGET"
+          pm2 start server.js || pm2 restart server.js
+          pm2 save
 
-            echo "🔄 Restarting NGINX..."
-            sudo systemctl restart nginx
+          echo "🔄 Restarting NGINX..."
+          sudo systemctl restart nginx
 
-            echo "✅ Deployment Complete Successfully!"
-EOF
+          echo "✅ Deployment Complete Successfully!"
+          EOF
