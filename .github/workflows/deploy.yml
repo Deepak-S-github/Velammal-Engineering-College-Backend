@@ -92,7 +92,6 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY" >> .env
             echo "AWS_S3_NAME=\$AWS_S3_NAME" >> .env
             echo "AWS_REGION=\$AWS_REGION" >> .env
-            
             echo "🔁 Replacing Frontend..."
             sudo rm -rf "$FRONTEND_TARGET"
             sudo mv "$FRONTEND_DIR" "$FRONTEND_TARGET"
