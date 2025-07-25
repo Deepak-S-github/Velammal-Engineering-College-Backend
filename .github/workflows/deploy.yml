@@ -37,6 +37,7 @@ jobs:
           AWS_S3_NAME: ${{ secrets.AWS_S3_NAME }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
+          
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<EOF
             set -e
