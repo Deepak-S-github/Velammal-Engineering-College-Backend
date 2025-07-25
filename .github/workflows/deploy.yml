@@ -17,50 +17,118 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > private_key.pem
           chmod 600 private_key.pem
 
-      - name: 🔐 Generate .env File from GitHub Secrets
+      - name: 🚀 SSH into EC2 and Run Deployment (No .env)
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          CHAT_DB_NAME: ${{ secrets.CHAT_DB_NAME }}
+          PORT: ${{ secrets.PORT }}
+          BASE_EMAIL: ${{ secrets.BASE_EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          TARGET_EMAIL: ${{ secrets.TARGET_EMAIL }}
+          ICELL_TARGET_EMAIL: ${{ secrets.ICELL_TARGET_EMAIL }}
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_API_KEY_3: ${{ secrets.GROQ_API_KEY_3 }}
+          GROQ_API_KEY_4: ${{ secrets.GROQ_API_KEY_4 }}
+          GROQ_API_KEY_5: ${{ secrets.GROQ_API_KEY_5 }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_NAME: ${{ secrets.AWS_S3_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
         run: |
-          echo "MONGO_URI=\"${{ secrets.MONGO_URI }}\"" >> .env
-          echo "DB_NAME=\"${{ secrets.DB_NAME }}\"" >> .env
-          echo "CHAT_DB_NAME=\"${{ secrets.CHAT_DB_NAME }}\"" >> .env
-          echo "PORT=\"${{ secrets.PORT }}\"" >> .env
-          echo "BASE_EMAIL=\"${{ secrets.BASE_EMAIL }}\"" >> .env
-          echo "PASSWORD=\"${{ secrets.PASSWORD }}\"" >> .env
-          echo "TARGET_EMAIL=\"${{ secrets.TARGET_EMAIL }}\"" >> .env
-          echo "ICELL_TARGET_EMAIL=\"${{ secrets.ICELL_TARGET_EMAIL }}\"" >> .env
-          echo "GROQ_API_KEY_1=\"${{ secrets.GROQ_API_KEY_1 }}\"" >> .env
-          echo "GROQ_API_KEY_2=\"${{ secrets.GROQ_API_KEY_2 }}\"" >> .env
-          echo "GROQ_API_KEY_3=\"${{ secrets.GROQ_API_KEY_3 }}\"" >> .env
-          echo "GROQ_API_KEY_4=\"${{ secrets.GROQ_API_KEY_4 }}\"" >> .env
-          echo "GROQ_API_KEY_5=\"${{ secrets.GROQ_API_KEY_5 }}\"" >> .env
-          echo "AWS_ACCESS_KEY_ID=\"${{ secrets.AWS_ACCESS_KEY_ID }}\"" >> .env
-          echo "AWS_SECRET_ACCESS_KEY=\"${{ secrets.AWS_SECRET_ACCESS_KEY }}\"" >> .env
-          echo "AWS_S3_NAME=\"${{ secrets.AWS_S3_NAME }}\"" >> .env
-          echo "AWS_REGION=\"${{ secrets.AWS_REGION }}\"" >> .env
-          echo "REACT_APP_BASE_URL=\"${{ secrets.REACT_APP_BASE_URL }}\"" >> .env
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<EOF
+            set -e
 
- 
-      - name: 🚀 SSH into EC2 and Run Deployment Script as root
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} << 'REMOTE_EOF'
-          set -e
+            echo -e "\n\033[1;34m🚀 Starting Safe Deployment...\033[0m"
 
-          echo "➡️ Switching to root..."
-          sudo su -c 'bash -s' <<'INNER_EOF'
-            echo "➡️ Moving .env to /root/.env..."
-            mv /home/ec2-user/.env /root/.env
+            export MONGO_URI="${MONGO_URI}"
+            export DB_NAME="${DB_NAME}"
+            export CHAT_DB_NAME="${CHAT_DB_NAME}"
+            export PORT="${PORT}"
+            export BASE_EMAIL="${BASE_EMAIL}"
+            export PASSWORD="${PASSWORD}"
+            export TARGET_EMAIL="${TARGET_EMAIL}"
+            export ICELL_TARGET_EMAIL="${ICELL_TARGET_EMAIL}"
+            export GROQ_API_KEY_1="${GROQ_API_KEY_1}"
+            export GROQ_API_KEY_2="${GROQ_API_KEY_2}"
+            export GROQ_API_KEY_3="${GROQ_API_KEY_3}"
+            export GROQ_API_KEY_4="${GROQ_API_KEY_4}"
+            export GROQ_API_KEY_5="${GROQ_API_KEY_5}"
+            export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+            export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+            export AWS_S3_NAME="${AWS_S3_NAME}"
+            export AWS_REGION="${AWS_REGION}"
+            export REACT_APP_BASE_URL="${REACT_APP_BASE_URL}"
 
-            echo "➡️ Moving setup.sh to /root/setup.sh..."
-            mv /home/ec2-user/setup.sh /root/setup.sh
+            REPO_URL="https://github.com/SAMSDP/VEC_Landing.git"
+            CLONE_DIR="\$HOME/VEC_Landing"
+            FRONTEND_DIR="\$CLONE_DIR/Frontend"
+            BACKEND_DIR="\$CLONE_DIR/Backend"
+            FRONTEND_TARGET="/var/www/html/Frontend"
+            BACKEND_TARGET="/var/www/Backend"
 
-            echo "➡️ Making setup.sh executable..."
-            chmod +x /root/setup.sh
+            echo -e "\n\033[1;32m🧹 Cleaning up old cloned repo if exists...\033[0m"
+            rm -rf "\$CLONE_DIR"
 
-            echo "📦 Installing dos2unix if missing..."
-            if ! command -v dos2unix &> /dev/null; then
-              yum install -y dos2unix || dnf install -y dos2unix
-            fi
+            echo -e "\n\033[1;32m📥 Cloning latest repo...\033[0m"
+            git clone "\$REPO_URL" "\$CLONE_DIR"
 
-            echo "🚀 Running setup script..."
-            bash /root/setup.sh
-          INNER_EOF
-          REMOTE_EOF
+            echo -e "\n\033[1;32m📦 Installing Frontend Dependencies...\033[0m"
+            cd "\$FRONTEND_DIR"
+            npm install --legacy-peer-deps
+
+            echo -e "\n\033[1;32m📄 Writing frontend .env inline...\033[0m"
+            echo "REACT_APP_BASE_URL=\$REACT_APP_BASE_URL" > .env
+
+            echo -e "\n\033[1;32m🏗️  Building React App...\033[0m"
+            npm run build
+
+            echo -e "\n\033[1;32m🛑 Stopping PM2 Backend if running...\033[0m"
+            pm2 stop server.js || true
+
+            echo -e "\n\033[1;32m📦 Installing Backend Dependencies...\033[0m"
+            cd "\$BACKEND_DIR"
+            npm install --legacy-peer-deps
+
+            echo -e "\n\033[1;32m📄 Writing backend .env using echo...\033[0m"
+            echo "MONGO_URI=\$MONGO_URI" > .env
+            echo "DB_NAME=\$DB_NAME" >> .env
+            echo "CHAT_DB_NAME=\$CHAT_DB_NAME" >> .env
+            echo "PORT=\$PORT" >> .env
+            echo "BASE_EMAIL=\$BASE_EMAIL" >> .env
+            echo "PASSWORD=\$PASSWORD" >> .env
+            echo "TARGET_EMAIL=\$TARGET_EMAIL" >> .env
+            echo "ICELL_TARGET_EMAIL=\$ICELL_TARGET_EMAIL" >> .env
+            echo "GROQ_API_KEY_1=\$GROQ_API_KEY_1" >> .env
+            echo "GROQ_API_KEY_2=\$GROQ_API_KEY_2" >> .env
+            echo "GROQ_API_KEY_3=\$GROQ_API_KEY_3" >> .env
+            echo "GROQ_API_KEY_4=\$GROQ_API_KEY_4" >> .env
+            echo "GROQ_API_KEY_5=\$GROQ_API_KEY_5" >> .env
+            echo "AWS_ACCESS_KEY_ID=\$AWS_ACCESS_KEY_ID" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=\$AWS_SECRET_ACCESS_KEY" >> .env
+            echo "AWS_S3_NAME=\$AWS_S3_NAME" >> .env
+            echo "AWS_REGION=\$AWS_REGION" >> .env
+
+            echo -e "\n\033[1;32m🔁 Replacing Frontend...\033[0m"
+            sudo rm -rf "\$FRONTEND_TARGET"
+            sudo mv "\$FRONTEND_DIR" "\$FRONTEND_TARGET"
+
+            echo -e "\n\033[1;32m🔁 Replacing Backend...\033[0m"
+            sudo rm -rf "\$BACKEND_TARGET"
+            sudo mv "\$BACKEND_DIR" "\$BACKEND_TARGET"
+
+            echo -e "\n\033[1;32m🚀 Restarting PM2 Backend...\033[0m"
+            cd "\$BACKEND_TARGET"
+            pm2 start server.js || pm2 restart server.js
+            pm2 save
+
+            echo -e "\n\033[1;32m🔄 Restarting NGINX...\033[0m"
+            sudo systemctl restart nginx
+
+            cd ~
+            rm -rf "\$CLONE_DIR"
+
+            echo -e "\n\033[1;32m✅ Deployment Complete Successfully!\033[0m"
+          EOF
