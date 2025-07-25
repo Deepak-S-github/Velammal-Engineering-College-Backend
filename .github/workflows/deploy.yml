@@ -40,41 +40,41 @@ jobs:
           REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<'EOF'
-          set -xe
+            set -xe
 
-          echo "🚀 Starting Safe Deployment..."
+            echo "🚀 Starting Safe Deployment..."
 
-          CLONE_DIR="$HOME/VEC_Landing"
-          FRONTEND_DIR="$CLONE_DIR/Frontend"
-          BACKEND_DIR="$CLONE_DIR/Backend"
-          FRONTEND_TARGET="/var/www/html/Frontend"
-          BACKEND_TARGET="/var/www/Backend"
+            CLONE_DIR="$HOME/VEC_Landing"
+            FRONTEND_DIR="$CLONE_DIR/Frontend"
+            BACKEND_DIR="$CLONE_DIR/Backend"
+            FRONTEND_TARGET="/var/www/html/Frontend"
+            BACKEND_TARGET="/var/www/Backend"
 
-          echo "🧹 Cleaning old repo if exists..."
-          rm -rf "$CLONE_DIR"
+            echo "🧹 Cleaning old repo if exists..."
+            rm -rf "$CLONE_DIR"
 
-          echo "📥 Cloning latest repo..."
-          git clone "${REPO_URL}" "$CLONE_DIR"
+            echo "📥 Cloning latest repo..."
+            git clone "$REPO_URL" "$CLONE_DIR"
 
-          echo "📦 Installing Frontend Dependencies..."
-          cd "$FRONTEND_DIR"
-          npm install --legacy-peer-deps
+            echo "📦 Installing Frontend Dependencies..."
+            cd "$FRONTEND_DIR"
+            npm install --legacy-peer-deps
 
-          echo "📄 Writing frontend .env inline..."
-          echo "REACT_APP_BASE_URL=${REACT_APP_BASE_URL}" > .env
+            echo "📄 Writing frontend .env inline..."
+            echo "REACT_APP_BASE_URL=${REACT_APP_BASE_URL}" > .env
 
-          echo "🏗️  Building React App..."
-          npm run build
+            echo "🏗️  Building React App..."
+            npm run build
 
-          echo "🛑 Stopping PM2 Backend if running..."
-          pm2 stop server.js || true
+            echo "🛑 Stopping PM2 Backend if running..."
+            pm2 stop server.js || true
 
-          echo "📦 Installing Backend Dependencies..."
-          cd "$BACKEND_DIR"
-          npm install --legacy-peer-deps
+            echo "📦 Installing Backend Dependencies..."
+            cd "$BACKEND_DIR"
+            npm install --legacy-peer-deps
 
-          echo -e "\n📄 Writing backend .env..."
-          cat <<ENVB > .env
+            echo "📄 Writing backend .env inline..."
+            cat <<EOT > .env
 MONGO_URI=${MONGO_URI}
 DB_NAME=${DB_NAME}
 CHAT_DB_NAME=${CHAT_DB_NAME}
@@ -92,23 +92,23 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_S3_NAME=${AWS_S3_NAME}
 AWS_REGION=${AWS_REGION}
-ENVB
+EOT
 
-          echo "🔁 Replacing Frontend..."
-          sudo rm -rf "$FRONTEND_TARGET"
-          sudo mv "$FRONTEND_DIR" "$FRONTEND_TARGET"
+            echo "🔁 Replacing Frontend..."
+            sudo rm -rf "$FRONTEND_TARGET"
+            sudo mv "$FRONTEND_DIR" "$FRONTEND_TARGET"
 
-          echo "🔁 Replacing Backend..."
-          sudo rm -rf "$BACKEND_TARGET"
-          sudo mv "$BACKEND_DIR" "$BACKEND_TARGET"
+            echo "🔁 Replacing Backend..."
+            sudo rm -rf "$BACKEND_TARGET"
+            sudo mv "$BACKEND_DIR" "$BACKEND_TARGET"
 
-          echo "🚀 Restarting PM2 Backend..."
-          cd "$BACKEND_TARGET"
-          pm2 start server.js || pm2 restart server.js
-          pm2 save
+            echo "🚀 Restarting PM2 Backend..."
+            cd "$BACKEND_TARGET"
+            pm2 start server.js || pm2 restart server.js
+            pm2 save
 
-          echo "🔄 Restarting NGINX..."
-          sudo systemctl restart nginx
+            echo "🔄 Restarting NGINX..."
+            sudo systemctl restart nginx
 
-          echo "✅ Deployment Complete Successfully!"
-          EOF
+            echo "✅ Deployment Complete Successfully!"
+EOF
