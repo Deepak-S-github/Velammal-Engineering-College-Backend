@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 360  # ⏱️ Prevent GitHub timeout for long deployments
 
     steps:
       - name: 🧾 Checkout Code
@@ -38,11 +39,16 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
         run: |
-          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=100 -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<EOF
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=100 -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_HOST }} <<'EOF'
             set -e
 
             echo -e "\n\033[1;34m🚀 Starting Safe Deployment...\033[0m"
 
+            # 🫀 Keep-alive loop
+            while true; do echo "💤 Still deploying at \$(date)..."; sleep 60; done &
+            KEEP_ALIVE_PID=\$!
+
+            # 🌍 Export environment variables
             export MONGO_URI="${MONGO_URI}"
             export DB_NAME="${DB_NAME}"
             export CHAT_DB_NAME="${CHAT_DB_NAME}"
@@ -62,6 +68,7 @@ jobs:
             export AWS_REGION="${AWS_REGION}"
             export REACT_APP_BASE_URL="${REACT_APP_BASE_URL}"
 
+            # 📁 Define paths
             REPO_URL="https://github.com/SAMSDP/VEC_Landing.git"
             CLONE_DIR="\$HOME/VEC_Landing"
             FRONTEND_DIR="\$CLONE_DIR/Frontend"
@@ -86,7 +93,6 @@ jobs:
             npm run build
 
             echo -e "\n\033[1;32m🛑 Stopping PM2 Backend if running...\033[0m"
-           
 
             echo -e "\n\033[1;32m📦 Installing Backend Dependencies...\033[0m"
             cd "\$BACKEND_DIR"
@@ -130,6 +136,9 @@ jobs:
 
             cd ~
             rm -rf "\$CLONE_DIR"
+
+            # 🔪 Stop the keep-alive loop
+            kill \$KEEP_ALIVE_PID
 
             echo -e "\n\033[1;32m✅ Deployment Complete Successfully!\033[0m"
           EOF
