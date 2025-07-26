@@ -122,4 +122,4 @@ jobs:
             sudo systemctl restart nginx
 
             echo -e "\n\033[1;32m✅ Deployment Completed!\033[0m"
-        EOF
+        
