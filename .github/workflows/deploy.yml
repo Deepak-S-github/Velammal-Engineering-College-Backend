@@ -86,7 +86,7 @@ jobs:
             npm run build
 
             echo -e "\n\033[1;32m🛑 Stopping PM2 Backend if running...\033[0m"
-            pm2 stop server.js || true
+           
 
             echo -e "\n\033[1;32m📦 Installing Backend Dependencies...\033[0m"
             cd "\$BACKEND_DIR"
